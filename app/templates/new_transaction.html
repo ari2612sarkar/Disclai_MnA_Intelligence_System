@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}New Transaction - DISCLAI{% endblock %}
+
+{% set active_tab = 'transactions' %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Create Transaction</h1>
+    <p class="page-subtitle">Define parties and deal parameters</p>
+</div>
+
+<div class="card" style="max-width: 800px;">
+    <div class="card-body">
+        <form id="transactionForm" method="post" action="/transactions/create">
+            <div class="grid grid-2" style="margin-bottom: 24px;">
+                <div class="form-group">
+                    <label class="form-label">Transaction Name</label>
+                    <input type="text" name="name" class="form-input" placeholder="e.g., Acme-Beta Acquisition" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Deal Value (optional)</label>
+                    <input type="number" name="deal_value" class="form-input" placeholder="e.g., 50000000" step="1000000">
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Description (optional)</label>
+                <textarea name="description" class="form-input" rows="3" placeholder="Transaction context, key dates, etc."></textarea>
+            </div>
+            
+            <hr style="margin: 24px 0; border-color: var(--border);">
+            
+            <h3 style="margin-bottom: 16px;">Company A</h3>
+            <div class="grid grid-2" style="margin-bottom: 24px;">
+                <div class="form-group">
+                    <label class="form-label">Company A Name</label>
+                    <input type="text" name="company_a_name" class="form-input" placeholder="e.g., Beta Holdings LLC" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Company A Role</label>
+                    <select name="company_a_role" class="form-input form-select" required>
+                        <option value="SELLER">Seller</option>
+                        <option value="BUYER">Buyer</option>
+                        <option value="TARGET">Target</option>
+                        <option value="ACQUIRER">Acquirer</option>
+                        <option value="PARENT">Parent</option>
+                        <option value="AFFILIATE">Affiliate</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Company A Description (optional)</label>
+                <textarea name="company_a_description" class="form-input" rows="2"></textarea>
+            </div>
+            
+            <hr style="margin: 24px 0; border-color: var(--border);">
+            
+            <h3 style="margin-bottom: 16px;">Company B</h3>
+            <div class="grid grid-2" style="margin-bottom: 24px;">
+                <div class="form-group">
+                    <label class="form-label">Company B Name</label>
+                    <input type="text" name="company_b_name" class="form-input" placeholder="e.g., Acme Corporation" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Company B Role</label>
+                    <select name="company_b_role" class="form-input form-select" required>
+                        <option value="BUYER">Buyer</option>
+                        <option value="SELLER">Seller</option>
+                        <option value="TARGET">Target</option>
+                        <option value="ACQUIRER">Acquirer</option>
+                        <option value="PARENT">Parent</option>
+                        <option value="AFFILIATE">Affiliate</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Company B Description (optional)</label>
+                <textarea name="company_b_description" class="form-input" rows="2"></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <a href="/transactions" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Create Transaction</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

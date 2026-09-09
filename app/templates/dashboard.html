@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - DISCLAI{% endblock %}
+
+{% set active_tab = 'dashboard' %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Transaction Dashboard</h1>
+    <p class="page-subtitle">Overview of deal risk, asymmetries, and key findings</p>
+</div>
+
+{% if not transaction %}
+<div class="card">
+    <div class="card-body" style="text-align: center; padding: 60px 20px;">
+        <div class="empty-icon">📋</div>
+        <h3>No Active Transaction</h3>
+        <p class="empty-desc">Create a transaction to begin analysis</p>
+        <a href="/transactions/new" class="btn btn-primary" style="margin-top: 16px;">Create Transaction</a>
+    </div>
+</div>
+{% else %}
+
+<div class="grid grid-4" style="margin-bottom: 24px;">
+    <div class="card stat-card">
+        <div class="stat-label">Overall Risk</div>
+        <div class="stat-value stat-{{ verdict.overall_risk_level.value.lower() }}">{{ verdict.overall_risk_level.value }}</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Deal Score</div>
+        <div class="stat-value stat-{{ 'critical' if verdict.score < 30 else 'high' if verdict.score < 50 else 'medium' if verdict.score < 70 else 'low' }}">{{ '%.1f'|format(verdict.score) }}/100</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Material Asymmetries</div>
+        <div class="stat-value stat-high">{{ verdict.material_asymmetries }}</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Critical Issues</div>
+        <div class="stat-value stat-critical">{{ verdict.critical_issues }}</div>
+    </div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom: 24px;">
+    <div class="card">
+        <div class="card-header">Company Overview</div>
+        <div class="card-body">
+            <div class="grid grid-2">
+                <div>
+                    <h4 style="color: var(--primary); margin-bottom: 12px;">{{ company_a.name }}</h4>
+                    <p><strong>Role:</strong> {{ company_a.role.value }}</p>
+                    <p><strong>Documents:</strong> {{ company_a_doc_count }}</p>
+                    <p><strong>Positions Extracted:</strong> {{ company_a_positions }}</p>
+                </div>
+                <div>
+                    <h4 style="color: var(--accent); margin-bottom: 12px;">{{ company_b.name }}</h4>
+                    <p><strong>Role:</strong> {{ company_b.role.value }}</p>
+                    <p><strong>Documents:</strong> {{ company_b_doc_count }}</p>
+                    <p><strong>Positions Extracted:</strong> {{ company_b_positions }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">Deal Assessment</div>
+        <div class="card-body">
+            <p style="margin-bottom: 16px;">{{ verdict.overall_assessment }}</p>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div><strong>Evidence-Backed Findings:</strong> {{ verdict.evidence_backed_findings }}</div>
+                <div><strong>Key Asymmetries:</strong> {{ verdict.key_asymmetries }}</div>
+                <div><strong>Confidence:</strong> {{ '%.0f%%'|format(verdict.confidence * 100) }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">Top Issues</div>
+    <div class="card-body">
+        {% if top_findings %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Provision</th>
+                        <th>Category</th>
+                        <th>Classification</th>
+                        <th>Company A</th>
+                        <th>Company B</th>
+                        <th>Impact</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for finding in top_findings %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ finding.provision }}</strong></td>
+                        <td>{{ finding.category.value }}</td>
+                        <td><span class="badge badge-{{ finding.classification.value.lower().replace('_', '-') }}">{{ finding.classification.value }}</span></td>
+                        <td>
+                            {% if finding.company_a_position %}
+                                {% if finding.company_a_position.percentage %}{{ finding.company_a_position.percentage }}%{% endif %}
+                                {% if finding.company_a_position.amount %}${{ '{:,.0f}'.format(finding.company_a_position.amount) }}{% endif %}
+                                {% if finding.company_a_position.duration %}{{ finding.company_a_position.duration }}{% endif %}
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>
+                            {% if finding.company_b_position %}
+                                {% if finding.company_b_position.percentage %}{{ finding.company_b_position.percentage }}%{% endif %}
+                                {% if finding.company_b_position.amount %}${{ '{:,.0f}'.format(finding.company_b_position.amount) }}{% endif %}
+                                {% if finding.company_b_position.duration %}{{ finding.company_b_position.duration }}{% endif %}
+                            {% else %}—{% endif %}
+                        </td>
+                        <td style="max-width: 250px;">{{ finding.legal_impact[:100] }}{% if finding.legal_impact|length > 100 %}...{% endif %}</td>
+                        <td>
+                            <a href="/comparison/{{ comparison_id }}/finding/{{ finding.id }}" class="btn btn-sm btn-secondary">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">✓</div>
+            <p>No material findings detected</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-header">
+            Party Strategy: {{ company_a.name }}
+        </div>
+        <div class="card-body">
+            {% if company_a_recs %}
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                {% for rec in company_a_recs[:5] %}
+                <div class="card" style="border-left: 4px solid var(--accent);">
+                    <div class="card-body" style="padding: 12px 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <strong>{{ rec.title }}</strong>
+                                <span class="badge badge-{{ rec.priority.value.lower() }}" style="margin-left: 8px;">{{ rec.priority.value }}</span>
+                            </div>
+                        </div>
+                        <p style="margin: 8px 0; font-size: 0.875rem; color: var(--text-secondary);">{{ rec.description }}</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);"><em>{{ rec.proposed_adjustment }}</em></p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <p>No specific recommendations</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            Party Strategy: {{ company_b.name }}
+        </div>
+        <div class="card-body">
+            {% if company_b_recs %}
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                {% for rec in company_b_recs[:5] %}
+                <div class="card" style="border-left: 4px solid var(--primary);">
+                    <div class="card-body" style="padding: 12px 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <strong>{{ rec.title }}</strong>
+                                <span class="badge badge-{{ rec.priority.value.lower() }}" style="margin-left: 8px;">{{ rec.priority.value }}</span>
+                            </div>
+                        </div>
+                        <p style="margin: 8px 0; font-size: 0.875rem; color: var(--text-secondary);">{{ rec.description }}</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);"><em>{{ rec.proposed_adjustment }}</em></p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <p>No specific recommendations</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+    <a href="/comparison/{{ comparison_id }}" class="btn btn-secondary">Full Analysis</a>
+    <a href="/comparison/{{ comparison_id }}/export" class="btn btn-primary">Export Report</a>
+</div>
+
+{% endif %}
+{% endblock %}

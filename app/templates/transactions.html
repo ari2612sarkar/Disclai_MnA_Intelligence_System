@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions - DISCLAI{% endblock %}
+
+{% set active_tab = 'transactions' %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1>Transactions</h1>
+        <p class="page-subtitle">Manage M&A transactions and deal analysis</p>
+    </div>
+    <a href="/transactions/new" class="btn btn-primary">New Transaction</a>
+</div>
+
+{% if transactions %}
+<div class="card">
+    <div class="card-body" style="padding: 0;">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Company A</th>
+                        <th>Company B</th>
+                        <th>Deal Value</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in transactions %}
+                    <tr>
+                        <td><strong>{{ txn.name }}</strong></td>
+                        <td>{{ txn.company_a_name }} ({{ txn.company_a_role.value }})</td>
+                        <td>{{ txn.company_b_name }} ({{ txn.company_b_role.value }})</td>
+                        <td>{% if txn.deal_value %}${{ '{:,.0f}'.format(txn.deal_value) }} {{ txn.currency }}{% else %}—{% endif %}</td>
+                        <td><span class="badge badge-{{ txn.status }}">{{ txn.status }}</span></td>
+                        <td>{{ txn.created_at.strftime('%Y-%m-%d') if txn.created_at else '—' }}</td>
+                        <td>
+                            <a href="/dashboard?transaction_id={{ txn.id }}" class="btn btn-sm btn-secondary">Open Dashboard</a>
+                            <a href="/transactions/{{ txn.id }}" class="btn btn-sm btn-secondary">Details</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body empty-state">
+        <div class="empty-icon">📁</div>
+        <h3>No Transactions</h3>
+        <p>Create your first transaction to begin analysis</p>
+        <a href="/transactions/new" class="btn btn-primary" style="margin-top: 16px;">Create Transaction</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

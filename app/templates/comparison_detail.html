@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}Comparison: {{ comparison.transaction_name }} - DISCLAI{% endblock %}
+
+{% set active_tab = 'comparisons' %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1>{{ comparison.transaction_name }}</h1>
+        <p class="page-subtitle">{{ comparison.company_a_name }} ({{ comparison.company_a_role.value }}) vs {{ comparison.company_b_name }} ({{ comparison.company_b_role.value }})</p>
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <a href="/comparison/{{ comparison.id }}/export" class="btn btn-primary">Export Report</a>
+        <a href="/comparisons" class="btn btn-secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom: 24px;">
+    <div class="card stat-card">
+        <div class="stat-label">Deal Score</div>
+        <div class="stat-value stat-{{ 'critical' if verdict.score < 30 else 'high' if verdict.score < 50 else 'medium' if verdict.score < 70 else 'low' }}">{{ '%.1f'|format(verdict.score) }}/100</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Risk Level</div>
+        <div class="stat-value stat-{{ verdict.overall_risk_level.value.lower() }}">{{ verdict.overall_risk_level.value }}</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Material Asymmetries</div>
+        <div class="stat-value stat-high">{{ verdict.material_asymmetries }}</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Cross-Doc Risks</div>
+        <div class="stat-value stat-warning">{{ verdict.cross_document_risks | length if verdict.cross_document_risks else 0 }}</div>
+    </div>
+</div>
+
+<div class="tab-nav" id="comparisonTabs">
+    <button class="tab-btn active" data-tab="findings">Findings ({{ comparison.findings | length }})</button>
+    <button class="tab-btn" data-tab="risks">Cross-Doc Risks ({{ comparison.cross_document_risks | length }})</button>
+    <button class="tab-btn" data-tab="disclosures">Disclosures ({{ comparison.disclosure_issues | length }})</button>
+    <button class="tab-btn" data-tab="recommendations">Recommendations</button>
+    <button class="tab-btn" data-tab="verdict">Deal Verdict</button>
+</div>
+
+<div class="tab-panel active" id="tab-findings">
+    {% for finding in comparison.findings %}
+    <div class="card finding-card {{ finding.classification.value.lower().replace('_', '-') }}" data-finding-id="{{ finding.id }}">
+        <div class="card-body">
+            <div class="finding-header">
+                <div>
+                    <div class="finding-title">{{ finding.provision }}</div>
+                    <div class="finding-category">{{ finding.category.value }} {% if finding.subcategory %}• {{ finding.subcategory }}{% endif %}</div>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span class="badge badge-{{ finding.classification.value.lower().replace('_', '-') }}">{{ finding.classification.value }}</span>
+                    {% if finding.beneficiary %}
+                    <span class="badge badge-info">{{ finding.beneficiary.value }} Advantage</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="comparison-row">
+                <div class="comparison-side company-a">
+                    <div class="evidence-header">Company A: {{ comparison.company_a_name }}</div>
+                    {% if finding.company_a_position %}
+                    <div style="font-size: 0.875rem; margin-bottom: 8px;">
+                        {% if finding.company_a_position.percentage %}<strong>Cap:</strong> {{ finding.company_a_position.percentage }}%<br>{% endif %}
+                        {% if finding.company_a_position.amount %}<strong>Amount:</strong> ${{ '{:,.0f}'.format(finding.company_a_position.amount) }}<br>{% endif %}
+                        {% if finding.company_a_position.duration %}<strong>Duration:</strong> {{ finding.company_a_position.duration }}<br>{% endif %}
+                        {% if finding.company_a_position.threshold %}<strong>Threshold:</strong> {{ finding.company_a_position.threshold }}<br>{% endif %}
+                        {% if finding.company_a_position.condition %}<strong>Conditions:</strong> {{ finding.company_a_position.condition | join(', ') }}<br>{% endif %}
+                        {% if finding.company_a_position.exception %}<strong>Exceptions:</strong> {{ finding.company_a_position.exception | join(', ') }}<br>{% endif %}
+                    </div>
+                    <div class="evidence-panel">
+                        <div class="evidence-header">Evidence (p.{{ finding.company_a_position.evidence.page_number }}, {{ finding.company_a_position.evidence.section_number or finding.company_a_position.evidence.heading }})</div>
+                        <div class="evidence-text">{{ finding.company_a_position.evidence.text[:500] }}{% if finding.company_a_position.evidence.text|length > 500 %}...{% endif %}</div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state" style="padding: 20px;">
+                        <div class="empty-icon">—</div>
+                        <p>No equivalent provision</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="comparison-vs">VS</div>
+                
+                <div class="comparison-side company-b">
+                    <div class="evidence-header">Company B: {{ comparison.company_b_name }}</div>
+                    {% if finding.company_b_position %}
+                    <div style="font-size: 0.875rem; margin-bottom: 8px;">
+                        {% if finding.company_b_position.percentage %}<strong>Cap:</strong> {{ finding.company_b_position.percentage }}%<br>{% endif %}
+                        {% if finding.company_b_position.amount %}<strong>Amount:</strong> ${{ '{:,.0f}'.format(finding.company_b_position.amount) }}<br>{% endif %}
+                        {% if finding.company_b_position.duration %}<strong>Duration:</strong> {{ finding.company_b_position.duration }}<br>{% endif %}
+                        {% if finding.company_b_position.threshold %}<strong>Threshold:</strong> {{ finding.company_b_position.threshold }}<br>{% endif %}
+                        {% if finding.company_b_position.condition %}<strong>Conditions:</strong> {{ finding.company_b_position.condition | join(', ') }}<br>{% endif %}
+                        {% if finding.company_b_position.exception %}<strong>Exceptions:</strong> {{ finding.company_b_position.exception | join(', ') }}<br>{% endif %}
+                    </div>
+                    <div class="evidence-panel">
+                        <div class="evidence-header">Evidence (p.{{ finding.company_b_position.evidence.page_number }}, {{ finding.company_b_position.evidence.section_number or finding.company_b_position.evidence.heading }})</div>
+                        <div class="evidence-text">{{ finding.company_b_position.evidence.text[:500] }}{% if finding.company_b_position.evidence.text|length > 500 %}...{% endif %}</div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state" style="padding: 20px;">
+                        <div class="empty-icon">—</div>
+                        <p>No equivalent provision</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if finding.differences %}
+            <div class="comparison-diff">
+                <strong>Differences:</strong>
+                <ul style="margin: 8px 0 0 20px; font-size: 0.875rem;">
+                    {% for diff in finding.differences %}
+                    <li><strong>{{ diff.attribute }}:</strong> A={{ diff.company_a_value or '—' }} vs B={{ diff.company_b_value or '—' }}
+                        {% if diff.difference and diff.difference.difference_months is not none %}
+                            ({{ diff.difference.difference_months|abs }} months difference)
+                        {% elif diff.absolute_difference is not none and diff.absolute_difference > 0 %}
+                            (diff: {{ diff.absolute_difference }})
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if finding.advantage_explanation %}
+            <div class="alert alert-info" style="margin-top: 12px;">
+                <strong>Advantage Analysis:</strong> {{ finding.advantage_explanation }}
+            </div>
+            {% endif %}
+            
+            <div style="margin-top: 12px; font-size: 0.875rem;">
+                <strong>Legal Impact:</strong> {{ finding.legal_impact }}
+                {% if finding.commercial_impact %}<br><strong>Commercial Impact:</strong> {{ finding.commercial_impact }}{% endif %}
+                {% if finding.negotiation_impact %}<br><strong>Negotiation Impact:</strong> {{ finding.negotiation_impact }}{% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="tab-panel" id="tab-risks">
+    {% if comparison.cross_document_risks %}
+    <div class="risk-graph">
+        {% for risk in comparison.cross_document_risks %}
+        <div class="risk-node connected" style="border-left: 4px solid {{ 'var(--critical)' if risk.severity.value == 'CRITICAL' else 'var(--danger)' if risk.severity.value == 'HIGH' else 'var(--warning)' if risk.severity.value == 'MEDIUM' else 'var(--success)' }};">
+            <div class="risk-severity" style="background: {{ 'var(--critical)' if risk.severity.value == 'CRITICAL' else 'var(--danger)' if risk.severity.value == 'HIGH' else 'var(--warning)' if risk.severity.value == 'MEDIUM' else 'var(--success)' }};"></div>
+            <div class="risk-content">
+                <div class="risk-title">{{ risk.risk_type }} <span class="badge badge-{{ risk.severity.value.lower() }}">{{ risk.severity.value }}</span></div>
+                <div class="risk-description">{{ risk.description }}</div>
+                <div style="margin-top: 4px; font-size: 0.8rem; color: var(--text-secondary);"><strong>Impact:</strong> {{ risk.impact }}</div>
+                <div style="margin-top: 4px; font-size: 0.75rem; color: var(--text-muted);">Components: {{ risk.component_findings | length }} findings</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🔗</div>
+        <p>No cross-document risks identified</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="tab-panel" id="tab-disclosures">
+    {% if comparison.disclosure_issues %}
+    {% for issue in comparison.disclosure_issues %}
+    <div class="card finding-card {{ issue.severity.value.lower() }}" style="margin-bottom: 16px;">
+        <div class="card-body">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <div>
+                    <strong>{{ issue.issue_type }}</strong>
+                    <span class="badge badge-{{ issue.severity.value.lower() }}" style="margin-left: 8px;">{{ issue.severity.value }}</span>
+                </div>
+            </div>
+            <p>{{ issue.description }}</p>
+            {% if issue.spa_requirement %}
+            <div class="evidence-panel" style="margin-top: 12px;">
+                <div class="evidence-header">SPA Requirement: {{ issue.spa_requirement.provision_name }} (p.{{ issue.spa_requirement.evidence.page_number }})</div>
+                <div class="evidence-text">{{ issue.spa_requirement.evidence.text[:400] }}...</div>
+            </div>
+            {% endif %}
+            {% if issue.data_room_evidence %}
+            <div class="evidence-panel" style="margin-top: 12px;">
+                <div class="evidence-header">Data Room Evidence (p.{{ issue.data_room_evidence.page_number }})</div>
+                <div class="evidence-text">{{ issue.data_room_evidence.text[:400] }}...</div>
+            </div>
+            {% endif %}
+            {% if issue.disclosure_schedule_evidence %}
+            <div class="evidence-panel" style="margin-top: 12px;">
+                <div class="evidence-header">Disclosure Schedule (p.{{ issue.disclosure_schedule_evidence.page_number }})</div>
+                <div class="evidence-text">{{ issue.disclosure_schedule_evidence.text[:400] }}...</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <p>No disclosure issues identified</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="tab-panel" id="tab-recommendations">
+    <div class="grid grid-2">
+        <div>
+            <h3 style="margin-bottom: 16px; color: var(--accent);">{{ comparison.company_a_name }} Recommendations</h3>
+            {% if verdict.company_a_recommendations %}
+            {% for rec in verdict.company_a_recommendations %}
+            <div class="card" style="margin-bottom: 12px; border-left: 4px solid var(--accent);">
+                <div class="card-body" style="padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <strong>{{ rec.title }}</strong>
+                        <span class="badge badge-{{ rec.priority.value.lower() }}">{{ rec.priority.value }}</span>
+                    </div>
+                    <p style="margin-bottom: 8px; color: var(--text-secondary);">{{ rec.description }}</p>
+                    <p style="font-size: 0.875rem; margin-bottom: 8px;"><strong>Current:</strong> {{ rec.current_position }}</p>
+                    <p style="font-size: 0.875rem; margin-bottom: 8px;"><strong>Proposed:</strong> {{ rec.proposed_adjustment }}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);"><em>Rationale: {{ rec.rationale }}</em></p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);"><em>Trade-off: {{ rec.commercial_tradeoff }}</em></p>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="empty-state">No recommendations</div>
+            {% endif %}
+        </div>
+        
+        <div>
+            <h3 style="margin-bottom: 16px; color: var(--primary);">{{ comparison.company_b_name }} Recommendations</h3>
+            {% if verdict.company_b_recommendations %}
+            {% for rec in verdict.company_b_recommendations %}
+            <div class="card" style="margin-bottom: 12px; border-left: 4px solid var(--primary);">
+                <div class="card-body" style="padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <strong>{{ rec.title }}</strong>
+                        <span class="badge badge-{{ rec.priority.value.lower() }}">{{ rec.priority.value }}</span>
+                    </div>
+                    <p style="margin-bottom: 8px; color: var(--text-secondary);">{{ rec.description }}</p>
+                    <p style="font-size: 0.875rem; margin-bottom: 8px;"><strong>Current:</strong> {{ rec.current_position }}</p>
+                    <p style="font-size: 0.875rem; margin-bottom: 8px;"><strong>Proposed:</strong> {{ rec.proposed_adjustment }}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);"><em>Rationale: {{ rec.rationale }}</em></p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);"><em>Trade-off: {{ rec.commercial_tradeoff }}</em></p>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="empty-state">No recommendations</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="tab-panel" id="tab-verdict">
+    <div class="card">
+        <div class="card-body">
+            <h3 style="margin-bottom: 16px;">{{ verdict.overall_assessment }}</h3>
+            
+            <div class="grid grid-2" style="margin-bottom: 24px;">
+                <div>
+                    <h4>{{ comparison.company_a_name }} Position</h4>
+                    {% if verdict.company_a_advantages %}
+                    <p><strong>Advantages:</strong></p>
+                    <ul style="margin-left: 20px; margin-bottom: 16px;">
+                        {% for adv in verdict.company_a_advantages %}
+                        <li>{{ adv }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% if verdict.company_a_weaknesses %}
+                    <p><strong>Weaknesses:</strong></p>
+                    <ul style="margin-left: 20px;">
+                        {% for weak in verdict.company_a_weaknesses %}
+                        <li>{{ weak }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                <div>
+                    <h4>{{ comparison.company_b_name }} Position</h4>
+                    {% if verdict.company_b_advantages %}
+                    <p><strong>Advantages:</strong></p>
+                    <ul style="margin-left: 20px; margin-bottom: 16px;">
+                        {% for adv in verdict.company_b_advantages %}
+                        <li>{{ adv }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% if verdict.company_b_weaknesses %}
+                    <p><strong>Weaknesses:</strong></p>
+                    <ul style="margin-left: 20px;">
+                        {% for weak in verdict.company_b_weaknesses %}
+                        <li>{{ weak }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 24px;">
+                <h4>Recommended Actions</h4>
+                <ol style="margin-left: 20px;">
+                    {% for action in verdict.recommended_actions %}
+                    <li>{{ action }}</li>
+                    {% endfor %}
+                </ol>
+            </div>
+            
+            {% if verdict.unresolved_questions %}
+            <div class="alert alert-warning">
+                <h4>Unresolved Questions</h4>
+                <ul style="margin-left: 20px; margin-top: 8px;">
+                    {% for q in verdict.unresolved_questions %}
+                    <li>{{ q }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+                <h4>Scoring Methodology</h4>
+                <pre style="font-size: 0.75rem; background: var(--background); padding: 12px; border-radius: var(--radius); white-space: pre-wrap; font-family: var(--font-mono);">{{ verdict.score_methodology }}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.tab-panel');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const target = this.dataset.tab;
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
+            
+            this.classList.add('active');
+            document.getElementById('tab-' + target).classList.add('active');
+        });
+    });
+});
+</script>
+{% endblock %}

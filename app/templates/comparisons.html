@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Comparisons - DISCLAI{% endblock %}
+
+{% set active_tab = 'comparisons' %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1>Comparisons</h1>
+        <p class="page-subtitle">View and run comparative analysis between parties</p>
+    </div>
+    <a href="/comparisons/new" class="btn btn-primary">New Comparison</a>
+</div>
+
+{% if comparisons %}
+<div class="card">
+    <div class="card-body" style="padding: 0;">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Transaction</th>
+                        <th>Company A</th>
+                        <th>Company B</th>
+                        <th>Matched</th>
+                        <th>Findings</th>
+                        <th>Material Asym.</th>
+                        <th>Cross-Doc Risks</th>
+                        <th>Disc. Issues</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comp in comparisons %}
+                    <tr>
+                        <td><strong>{{ comp.transaction_name }}</strong></td>
+                        <td>{{ comp.company_a_name }}</td>
+                        <td>{{ comp.company_b_name }}</td>
+                        <td>{{ comp.matched_provisions }}</td>
+                        <td>{{ comp.findings_count }}</td>
+                        <td><span class="badge badge-high">{{ comp.material_asymmetries_count }}</span></td>
+                        <td>{{ comp.cross_document_risks_count }}</td>
+                        <td>{{ comp.disclosure_issues_count }}</td>
+                        <td><span class="badge badge-{{ comp.status }}">{{ comp.status }}</span></td>
+                        <td>
+                            <a href="/comparison/{{ comp.id }}" class="btn btn-sm btn-secondary">View</a>
+                            <a href="/comparison/{{ comp.id }}/export" class="btn btn-sm btn-primary">Export</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body empty-state">
+        <div class="empty-icon">⚖️</div>
+        <h3>No Comparisons</h3>
+        <p>Run a comparison to analyze party positions</p>
+        <a href="/comparisons/new" class="btn btn-primary" style="margin-top: 16px;">Run Comparison</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
