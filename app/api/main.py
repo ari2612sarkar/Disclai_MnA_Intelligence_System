@@ -19,6 +19,7 @@ from app.models.session import init_db
 from app.core.logging import setup_logging
 from app.models.database import CompanyDB, TransactionDB, CompanyRoleEnum, DocumentDB, AnalysisRunDB, DocumentOwnershipDB, LegalPositionDB, ComparisonRunDB
 from app.models.session import get_db
+from app.api.demo_seed import router as demo_seed_router
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -33,6 +34,7 @@ app = FastAPI(
 # Templates and static files
 templates = Jinja2Templates(directory="app/templates")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.include_router(demo_seed_router)
 
 analysis_service = AnalysisService()
 comparison_service = ComparisonService()
