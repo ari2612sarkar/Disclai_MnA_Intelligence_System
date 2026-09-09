@@ -47,7 +47,8 @@ class HuggingFaceProvider(LLMProvider):
         self.api_key = api_key
         self.model_id = model_id
         self.base_url = "https://router.huggingface.co/v1"
-        self.client = httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=30.0), follow_redirects=True)
+        # Do not keep an AsyncClient across event loops.
+        # Render/demo execution can create separate event loops.
 
 
     @retry(
@@ -87,9 +88,16 @@ class HuggingFaceProvider(LLMProvider):
         url = f"{self.base_url}/chat/completions"
 
         try:
-            response = await self.client.post(url, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
+            # Create the client inside the current event loop.
+            # This prevents "Event loop is closed" when the provider is reused
+            # across separate asyncio.run() calls.
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(120.0, connect=30.0),
+                follow_redirects=True,
+            ) as client:
+                response = await client.post(url, headers=headers, json=payload)
+                response.raise_for_status()
+                data = response.json()
 
             content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
 
@@ -160,7 +168,8 @@ class HuggingFaceProvider(LLMProvider):
         return text
 
     async def close(self):
-        await self.client.aclose()
+        # HTTP clients are scoped to individual generate() calls.
+        pass
 
 
 class MockLLMProvider(LLMProvider):
