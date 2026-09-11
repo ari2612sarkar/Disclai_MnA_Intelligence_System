@@ -79,8 +79,13 @@ def main():
     
     try:
         # Health check
-        r = requests.get(f'{base_url}/api/health', timeout=10)
-        print(f"Health check: {r.json()}")
+            # Skip HTTP health check when running inside the Render process.
+        # The /api/demo/seed endpoint already runs inside the application.
+        if base_url.startswith("http"):
+            print("Health check skipped: demo is running inside the application process.")
+        else:
+            r = requests.get(f'{base_url}/api/health', timeout=10)
+            print(f"Health check: {r.json()}")
         
         # 1. Create companies
         print("\n1. Creating Company A (Seller)...")
