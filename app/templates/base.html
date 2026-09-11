@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="description" content="DISCLAI — evidence-backed comparative M&A transaction intelligence">
+    <title>{% block title %}DISCLAI — Transaction Intelligence{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='assets/styles.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div id="app" aria-live="polite"></div>
+    <noscript>
+        <div style="max-width:720px;margin:80px auto;padding:24px;font-family:system-ui,sans-serif">
+            <h1>DISCLAI requires JavaScript</h1>
+            <p>Enable JavaScript to use the transaction intelligence workspace.</p>
+        </div>
+    </noscript>
+    <script src="{{ url_for('static', path='assets/app.js') }}" defer></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

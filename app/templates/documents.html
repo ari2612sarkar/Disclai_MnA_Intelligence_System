@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Data Room - DISCLAI{% endblock %}
+
+{% set active_tab = 'documents' %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1>Data Room</h1>
+        <p class="page-subtitle">Document management and analysis status</p>
+    </div>
+    {% if transaction %}
+    <a href="/documents/upload?transaction_id={{ transaction.id }}" class="btn btn-primary">Upload Document</a>
+    {% endif %}
+</div>
+
+{% if not transaction %}
+<div class="alert alert-warning">
+    <strong>No transaction selected.</strong> Select a transaction from the dashboard or transactions page to view documents.
+</div>
+{% else %}
+
+<div class="grid grid-2" style="margin-bottom: 24px;">
+    <div class="card">
+        <div class="card-header">{{ company_a.name }} Documents</div>
+        <div class="card-body" style="padding: 0;">
+            {% if company_a_documents %}
+            {% for doc in company_a_documents %}
+            <div class="doc-item">
+                <div class="doc-info">
+                    <div class="doc-icon">📄</div>
+                    <div class="doc-details">
+                        <span class="doc-name">{{ doc.filename }}</span>
+                        <span class="doc-meta">{{ doc.page_count }} pages • {{ doc.document_type.value }} • {{ '%.1f' % (doc.size_bytes / 1024) }} KB</span>
+                    </div>
+                </div>
+                <div class="doc-status">
+                    <span class="badge badge-{{ doc.analysis_status }}">{{ doc.analysis_status }}</span>
+                    {% if doc.run_id %}
+                    <a href="/analysis/{{ doc.run_id }}" class="btn btn-sm btn-secondary">View Analysis</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="empty-state" style="padding: 40px 20px;">
+                <div class="empty-icon">📁</div>
+                <p>No documents uploaded</p>
+                <a href="/documents/upload?transaction_id={{ transaction.id }}&company=company_a" class="btn btn-primary" style="margin-top: 12px;">Upload for {{ company_a.name }}</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">{{ company_b.name }} Documents</div>
+        <div class="card-body" style="padding: 0;">
+            {% if company_b_documents %}
+            {% for doc in company_b_documents %}
+            <div class="doc-item">
+                <div class="doc-info">
+                    <div class="doc-icon">📄</div>
+                    <div class="doc-details">
+                        <span class="doc-name">{{ doc.filename }}</span>
+                        <span class="doc-meta">{{ doc.page_count }} pages • {{ doc.document_type.value }} • {{ '%.1f' % (doc.size_bytes / 1024) }} KB</span>
+                    </div>
+                </div>
+                <div class="doc-status">
+                    <span class="badge badge-{{ doc.analysis_status }}">{{ doc.analysis_status }}</span>
+                    {% if doc.run_id %}
+                    <a href="/analysis/{{ doc.run_id }}" class="btn btn-sm btn-secondary">View Analysis</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="empty-state" style="padding: 40px 20px;">
+                <div class="empty-icon">📁</div>
+                <p>No documents uploaded</p>
+                <a href="/documents/upload?transaction_id={{ transaction.id }}&company=company_b" class="btn btn-primary" style="margin-top: 12px;">Upload for {{ company_b.name }}</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}

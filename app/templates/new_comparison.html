@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}New Comparison - DISCLAI{% endblock %}
+
+{% set active_tab = 'comparisons' %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Run Comparison</h1>
+    <p class="page-subtitle">Select transaction and analysis runs to compare</p>
+</div>
+
+<div class="card" style="max-width: 800px;">
+    <div class="card-body">
+        <form id="comparisonForm" method="post" action="/comparison/run">
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Transaction</label>
+                <select name="transaction_id" class="form-input form-select" required>
+                    <option value="">Select a transaction</option>
+                    {% for txn in transactions %}
+                    <option value="{{ txn.id }}">{{ txn.name }} ({{ txn.company_a_name }} vs {{ txn.company_b_name }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="grid grid-2" style="margin-bottom: 24px;">
+                <div class="form-group">
+                    <label class="form-label">Company A Analysis Run</label>
+                    <select name="company_a_run_id" class="form-input form-select" required>
+                        <option value="">Select Company A run</option>
+                        {% for run in company_a_runs %}
+                        <option value="{{ run.id }}">{{ run.id[:8] }} - {{ run.provisions_extracted }} provisions ({{ run.verified_findings }} verified)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Company B Analysis Run</label>
+                    <select name="company_b_run_id" class="form-input form-select" required>
+                        <option value="">Select Company B run</option>
+                        {% for run in company_b_runs %}
+                        <option value="{{ run.id }}">{{ run.id[:8] }} - {{ run.provisions_extracted }} provisions ({{ run.verified_findings }} verified)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <a href="/comparisons" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Run Comparison</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

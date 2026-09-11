@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document - DISCLAI{% endblock %}
+
+{% set active_tab = 'documents' %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Upload Document</h1>
+    <p class="page-subtitle">Add documents to {{ transaction.name if transaction else 'the data room' }}</p>
+</div>
+
+<div class="card" style="max-width: 700px;">
+    <div class="card-body">
+        <form id="uploadForm" method="post" action="/documents/upload" enctype="multipart/form-data">
+            {% if transaction %}
+            <input type="hidden" name="transaction_id" value="{{ transaction.id }}">
+            {% endif %}
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Company</label>
+                <select name="company_id" class="form-input form-select" required>
+                    <option value="">Select company</option>
+                    {% if company_a %}
+                    <option value="{{ company_a.id }}">{{ company_a.name }} ({{ company_a.role.value }})</option>
+                    {% endif %}
+                    {% if company_b %}
+                    <option value="{{ company_b.id }}">{{ company_b.name }} ({{ company_b.role.value }})</option>
+                    {% endif %}
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Role in Document</label>
+                <select name="role_in_document" class="form-input form-select" required>
+                    <option value="SELLER">Seller</option>
+                    <option value="BUYER">Buyer</option>
+                    <option value="TARGET">Target</option>
+                    <option value="COMPANY">Company</option>
+                    <option value="PARENT">Parent</option>
+                    <option value="AFFILIATE">Affiliate</option>
+                    <option value="UNKNOWN">Unknown</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">Document Type (optional)</label>
+                <select name="document_type" class="form-input form-select">
+                    <option value="UNKNOWN">Auto-detect</option>
+                    <option value="SPA">SPA</option>
+                    <option value="DISCLOSURE_SCHEDULE">Disclosure Schedule</option>
+                    <option value="COMMERCIAL_CONTRACT">Commercial Contract</option>
+                    <option value="LITIGATION_DOCUMENT">Litigation Document</option>
+                    <option value="EMPLOYMENT_DOCUMENT">Employment Document</option>
+                    <option value="IP_DOCUMENT">IP Document</option>
+                    <option value="FINANCING_DOCUMENT">Financing Document</option>
+                    <option value="REGULATORY_DOCUMENT">Regulatory Document</option>
+                    <option value="OTHER">Other</option>
+                </select>
+            </div>
+            
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" name="file" id="fileInput" accept=".pdf" required>
+                <div class="upload-icon">📄</div>
+                <p style="font-size: 1.1rem; margin-bottom: 8px;"><strong>Drag & drop PDF here</strong> or click to browse</p>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">Maximum file size: 50MB</p>
+            </div>
+            
+            <div id="fileInfo" style="display: none; margin-top: 16px; padding: 12px; background: var(--background); border-radius: var(--radius);">
+                <strong id="fileName"></strong>
+                <span id="fileSize" style="margin-left: 16px; color: var(--text-muted);"></span>
+            </div>
+            
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+                <a href="/documents" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary" id="uploadBtn" disabled>Upload & Analyze</button>
+            </div>
+        </form>
+        
+        <div id="progressContainer" style="display: none; margin-top: 24px;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <p id="progressText" style="text-align: center; margin-top: 8px; color: var(--text-secondary);">Uploading...</p>
+        </div>
+        
+        <div id="resultContainer" style="display: none; margin-top: 24px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadForm = document.getElementById('uploadForm');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const resultContainer = document.getElementById('resultContainer');
+    
+    uploadZone.addEventListener('click', () => fileInput.click());
+    
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+    
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+    
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            handleFileSelect();
+        }
+    });
+    
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    function handleFileSelect() {
+        const file = fileInput.files[0];
+        if (file) {
+            if (file.type !== 'application/pdf') {
+                alert('Please select a PDF file');
+                fileInput.value = '';
+                return;
+            }
+            if (file.size > 50 * 1024 * 1024) {
+                alert('File size must be less than 50MB');
+                fileInput.value = '';
+                return;
+            }
+            fileName.textContent = file.name;
+            fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+            fileInfo.style.display = 'block';
+            uploadBtn.disabled = false;
+        }
+    }
+    
+    uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(uploadForm);
+        
+        uploadZone.style.display = 'none';
+        uploadBtn.style.display = 'none';
+        progressContainer.style.display = 'block';
+        progressText.textContent = 'Uploading document...';
+        
+        try {
+            const response = await fetch('/documents/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                progressText.textContent = 'Upload complete. Starting analysis...';
+                progressFill.style.width = '50%';
+                
+                // Poll for analysis completion
+                if (data.document_id) {
+                    pollAnalysis(data.document_id);
+                }
+            } else {
+                throw new Error(data.detail || 'Upload failed');
+            }
+        } catch (error) {
+            resultContainer.style.display = 'block';
+            resultContainer.innerHTML = '<div class="alert alert-danger">' + error.message + '</div>';
+            uploadZone.style.display = 'block';
+            uploadBtn.style.display = 'inline-flex';
+            progressContainer.style.display = 'none';
+        }
+    });
+    
+    async function pollAnalysis(documentId) {
+        progressText.textContent = 'Analyzing document...';
+        
+        const maxAttempts = 60;
+        let attempts = 0;
+        
+        const poll = async () => {
+            attempts++;
+            if (attempts >= maxAttempts) {
+                progressText.textContent = 'Analysis taking longer than expected. Check the analysis page.';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/analysis/status/' + documentId);
+                const data = await response.json();
+                
+                if (data.status === 'completed') {
+                    progressFill.style.width = '100%';
+                    progressText.textContent = 'Analysis complete!';
+                    resultContainer.style.display = 'block';
+                    resultContainer.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>Analysis Complete!</strong><br>
+                            Document ID: ${data.document_id}<br>
+                            Run ID: ${data.run_id}<br>
+                            Positions Extracted: ${data.positions_extracted}<br>
+                            <a href="/analysis/${data.run_id}" class="btn btn-secondary" style="margin-top: 12px;">View Results</a>
+                        </div>
+                    `;
+                    return;
+                } else if (data.status === 'failed') {
+                    throw new Error(data.error || 'Analysis failed');
+                } else {
+                    progressText.textContent = `Analyzing... (${data.progress || 'processing'})`;
+                    progressFill.style.width = `${Math.min(50 + attempts * 0.8, 95)}%`;
+                    setTimeout(poll, 2000);
+                }
+            } catch (error) {
+                resultContainer.style.display = 'block';
+                resultContainer.innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
+            }
+        };
+        
+        await poll();
+    }
+});
+</script>
+{% endblock %}
