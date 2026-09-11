@@ -1,4 +1,3 @@
-import { UploadModal } from '@/components/UploadModal';
 import { api } from '@/api';
 import { getStatusClass } from '@/utils/helpers';
 export class DocumentsView {
@@ -6,8 +5,6 @@ export class DocumentsView {
         this.transactionId = null;
         this.companyADocs = [];
         this.companyBDocs = [];
-        this.companyAId = '';
-        this.companyBId = '';
         this.container = container;
         this.app = app;
     }
@@ -46,14 +43,10 @@ export class DocumentsView {
         if (!this.transactionId)
             return;
         try {
-            const [response, transaction] = await Promise.all([
-                api.documents.list(this.transactionId),
-                api.transactions.get(this.transactionId),
-            ]);
+            const response = await api.documents.list(this.transactionId);
+            // The API returns company_a_documents and company_b_documents
             this.companyADocs = response.company_a_documents || [];
             this.companyBDocs = response.company_b_documents || [];
-            this.companyAId = transaction.company_a_id || '';
-            this.companyBId = transaction.company_b_id || '';
         }
         catch (e) {
             console.warn('Failed to load documents:', e);
@@ -137,16 +130,10 @@ export class DocumentsView {
     }
     bindEvents() {
         this.container.querySelector('#upload-a-btn')?.addEventListener('click', () => {
-            new UploadModal(this.app, {
-                transactionId: this.transactionId || undefined,
-                companyId: this.companyAId,
-            }).open();
+            // TODO: Open upload modal for Company A
         });
         this.container.querySelector('#upload-b-btn')?.addEventListener('click', () => {
-            new UploadModal(this.app, {
-                transactionId: this.transactionId || undefined,
-                companyId: this.companyBId,
-            }).open();
+            // TODO: Open upload modal for Company B
         });
         this.container.querySelectorAll('[data-action="analyze"]').forEach(btn => {
             btn.addEventListener('click', async (e) => {

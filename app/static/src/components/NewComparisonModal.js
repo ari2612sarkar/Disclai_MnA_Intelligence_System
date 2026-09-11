@@ -137,7 +137,8 @@ export class NewComparisonModal {
         submitBtn.disabled = !runASelect.value || !runBSelect.value;
     }
     async getCompanyRuns(companyId) {
-        return api.analysis.runsForCompany(companyId);
+        // This would need a proper API endpoint; for now return empty
+        return [];
     }
     close() {
         if (this.overlay) {

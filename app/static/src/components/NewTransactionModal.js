@@ -1,4 +1,3 @@
-import { api } from '@/api';
 export class NewTransactionModal {
     constructor(app) {
         this.overlay = null;
@@ -30,7 +29,7 @@ export class NewTransactionModal {
             </div>
             <div class="form-group">
               <label class="form-label" for="txn-deal-value">Deal Value (USD)</label>
-              <input type="number" class="form-input" id="txn-deal-value" name="deal_value" placeholder="50000000" step="any" min="0">
+              <input type="number" class="form-input" id="txn-deal-value" name="deal_value" placeholder="50000000" step="1000000">
             </div>
             <hr style="margin: 16px 0; border-color: var(--color-border);">
             <h4 style="margin-bottom: 12px; font-size: 14px;">Company A (Party 1)</h4>
@@ -112,25 +111,7 @@ export class NewTransactionModal {
             submitBtn.disabled = true;
             submitBtn.textContent = 'Creating...';
             try {
-                const companyA = await api.companies.create({
-                    name: String(data.company_a_name),
-                    role: String(data.company_a_role),
-                    description: String(data.company_a_description || ''),
-                });
-                const companyB = await api.companies.create({
-                    name: String(data.company_b_name),
-                    role: String(data.company_b_role),
-                    description: String(data.company_b_description || ''),
-                });
-                const txn = await api.transactions.create({
-                    name: String(data.name),
-                    description: String(data.description || ''),
-                    company_a_id: companyA.id,
-                    company_b_id: companyB.id,
-                    company_a_role: String(data.company_a_role),
-                    company_b_role: String(data.company_b_role),
-                    deal_value: data.deal_value,
-                });
+                const txn = await this.app.api.transactions.create(data);
                 this.close();
                 await this.app.refreshTransactions();
                 this.app.setCurrentTransactionId(txn.id);

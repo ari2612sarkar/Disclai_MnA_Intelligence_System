@@ -1,4 +1,3 @@
-import { UploadModal } from '@/components/UploadModal';
 import { api } from '@/api';
 import { formatCurrency, formatDate, getStatusClass } from '@/utils/helpers';
 

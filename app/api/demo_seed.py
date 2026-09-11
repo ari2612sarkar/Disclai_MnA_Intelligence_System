@@ -8,16 +8,20 @@ router = APIRouter(prefix="/api/demo", tags=["demo"])
 
 @router.post("/seed")
 async def seed_demo():
-    script = Path("scripts/demo_e2e.py")
+    script = Path("scripts/run_demo_full.py")
 
     if not script.exists():
         return {"status": "error", "message": "Demo script not found"}
+
+    env = os.environ.copy()
+    env.setdefault("DISCLAI_BASE_URL", env.get("RENDER_EXTERNAL_URL", "http://127.0.0.1:8000"))
 
     result = subprocess.run(
         [sys.executable, str(script)],
         capture_output=True,
         text=True,
         timeout=900,
+        env=env,
     )
 
     return {

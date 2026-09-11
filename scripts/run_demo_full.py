@@ -6,13 +6,12 @@ import os
 import sys
 import time
 import requests
-import threading
-import uvicorn
-from app.api.main import app
 
 # File paths
-COMPANY_A_DIR = r"D:\Legal_Bot\disclai\tests\fixtures\demo_transaction\company_a"
-COMPANY_B_DIR = r"D:\Legal_Bot\disclai\tests\fixtures\demo_transaction\company_b"
+from pathlib import Path
+REPO_ROOT = Path(__file__).resolve().parents[1]
+COMPANY_A_DIR = str(REPO_ROOT / 'tests' / 'fixtures' / 'demo_transaction' / 'company_a')
+COMPANY_B_DIR = str(REPO_ROOT / 'tests' / 'fixtures' / 'demo_transaction' / 'company_b')
 
 company_a_files = [
     ("SPA.pdf", "Seller"),
@@ -29,9 +28,6 @@ company_b_files = [
     ("Litigation.pdf", "Buyer"),
     ("Employment_Agreement.pdf", "Buyer"),
 ]
-
-def run_server():
-    uvicorn.run(app, host='127.0.0.1', port=8000, log_level='error')
 
 def get_doc_type(filename):
     if filename == 'SPA.pdf':
@@ -79,13 +75,7 @@ def main():
     print("Northstar Technologies (Seller) vs Vertex Systems (Buyer)")
     print("=" * 60)
     
-    # Start server
-    print("Starting API server...")
-    server_thread = threading.Thread(target=run_server, daemon=True)
-    server_thread.start()
-    time.sleep(5)
-    
-    base_url = 'http://127.0.0.1:8000'
+    base_url = os.environ.get('DISCLAI_BASE_URL') or os.environ.get('RENDER_EXTERNAL_URL') or 'http://127.0.0.1:8000'
     
     try:
         # Health check

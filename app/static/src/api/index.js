@@ -1,13 +1,12 @@
 export const API_BASE = '';
 export async function apiRequest(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint}`;
-    const headers = new Headers(options.headers);
-    if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
-        headers.set('Content-Type', 'application/json');
-    }
     const response = await fetch(url, {
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+        },
         ...options,
-        headers,
     });
     if (!response.ok) {
         const error = await response.json().catch(() => ({ detail: 'Request failed' }));
@@ -46,7 +45,7 @@ export const api = {
                 body: form,
             });
         },
-        list: (transactionId) => apiRequest(`/api/documents?transaction_id=${transactionId}`),
+        list: (transactionId) => apiRequest(`/documents?transaction_id=${transactionId}`),
         status: (id) => apiRequest(`/analysis/status/${id}`),
     },
     analysis: {
@@ -54,9 +53,8 @@ export const api = {
             method: 'POST',
             body: JSON.stringify({ document_id: documentId }),
         }),
-        get: (runId) => apiRequest(`/analysis/${runId}`),
+        get: (runId) => apiRequest(`/api/analysis/${runId}`),
         findings: (runId) => apiRequest(`/api/findings/${runId}`),
-        runsForCompany: (companyId) => apiRequest(`/api/analysis/runs/company/${companyId}`),
     },
     comparison: {
         run: (data) => apiRequest('/api/comparison/run', { method: 'POST', body: JSON.stringify(data) }),
