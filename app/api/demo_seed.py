@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from pathlib import Path
+import os
 import subprocess
 import sys
 
@@ -8,7 +9,7 @@ router = APIRouter(prefix="/api/demo", tags=["demo"])
 
 @router.post("/seed")
 async def seed_demo():
-    script = Path("scripts/run_demo_full.py")
+    script = Path(__file__).resolve().parents[2] / "scripts" / "run_demo_full.py"
 
     if not script.exists():
         return {"status": "error", "message": "Demo script not found"}
